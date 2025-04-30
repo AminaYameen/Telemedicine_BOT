@@ -24,6 +24,8 @@ from email.mime.multipart import MIMEMultipart
 import chainlit as cl
 from sqlmodel import SQLModel, Field, create_engine, Session
 from typing import Optional
+import requests
+import json
 import os
 from fastapi import FastAPI, HTTPException
 import uvicorn
@@ -45,6 +47,108 @@ llm = ChatGoogleGenerativeAI(
     google_api_key=os.getenv("GOOGLE_API_KEY")
 )
 
+
+CLIENT_ID = os.getenv("ZOOM_CLIENT_ID")
+CLIENT_SECRET = os.getenv("ZOOM_CLIENT_SECRET")
+ACCOUNT_ID = os.getenv("ZOOM_ACCOUNT_ID")
+
+def get_access_token():
+    url = "https://zoom.us/oauth/token"
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    payload = {
+        "grant_type": "account_credentials",
+        "account_id": ACCOUNT_ID
+    }
+    auth = (CLIENT_ID, CLIENT_SECRET)
+
+    response = requests.post(url, headers=headers, data=payload, auth=auth)
+    try:
+        return response.json()["access_token"]
+    except KeyError:
+        return {
+            "error": "Failed to fetch token",
+            "status_code": response.status_code,
+            "response": response.text
+        }
+
+def getUsers():
+    """Fetch Zoom user information"""
+    token = get_access_token()
+    if isinstance(token, dict) and "error" in token:
+        return token
+    
+    headers = {
+        'authorization': f'Bearer {token}',
+        'content-type': 'application/json'
+    }
+    response = requests.get('https://api.zoom.us/v2/users/', headers=headers)
+    return response.json()
+
+def getMeetingParticipants(meeting_id):
+    """Fetch participants of a live Zoom meeting by meeting_id"""
+    token = get_access_token()
+    if isinstance(token, dict) and "error" in token:
+        return token
+
+    headers = {
+        'authorization': f'Bearer {token}',
+        'content-type': 'application/json'
+    }
+    response = requests.get(
+        f'https://api.zoom.us/v2/metrics/meetings/{meeting_id}/participants',
+        headers=headers
+    )
+    return response.json()
+
+meetingdetails = {
+    "topic": "Telemedicine",
+    "type": 2,
+    "start_time": "2025-05-14T10:21:57",
+    "duration": "45",
+    "timezone": "Asia/Karachi",
+    "agenda": "test",
+    "recurrence": {
+        "type": 1,
+        "repeat_interval": 1
+    },
+    "settings": {
+        "host_video": True,
+        "participant_video": True,
+        "join_before_host": False,
+        "mute_upon_entry": False,
+        "watermark": True,
+        "audio": "voip",
+        "auto_recording": "cloud"
+    }
+}
+
+def createMeeting():
+    """Create a new Zoom meeting and return details"""
+    token = get_access_token()
+    if isinstance(token, dict) and "error" in token:
+        return token
+
+    headers = {
+        'authorization': f'Bearer {token}',
+        'content-type': 'application/json'
+    }
+
+    response = requests.post(
+        'https://api.zoom.us/v2/users/me/meetings',
+        headers=headers,
+        data=json.dumps(meetingdetails)
+    )
+
+    if response.status_code == 201:
+        return response.json()
+    else:
+        return {
+            "error": "Failed to create meeting",
+            "status_code": response.status_code,
+            "response": response.text
+        }
 
 # Setup the RAG model and FAISS VectorStore
 embedding = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
@@ -295,82 +399,105 @@ retriever_tool = create_retriever_tool(
 )
 
 
-tools = [search, retriever_tool, book_appointment, update_appointment, cancel_appointment, read_all_appointments, rag_query_tool]
+tools = [search, retriever_tool, book_appointment, update_appointment, cancel_appointment, read_all_appointments, rag_query_tool, createMeeting]
 
 
 llm_with_tools = llm.bind_tools(tools)
 
 # System message
-sys_msg = SystemMessage(content='''You are a knowledgeable and supportive assistant specializing in hospital and healthcare services. 
-Your key responsibilities include providing information about hospitals, doctors, specializations, and assisting with appointment bookings (or video conceltation) for healthcare professionals.
+sys_msg = SystemMessage(content='''You are a knowledgeable and supportive assistant specializing in hospital and healthcare services. Your key responsibilities include providing information about hospitals, doctors, specializations, assisting with appointment bookings, and facilitating video consultations via Zoom meetings when an appointment is booked.
 
-### **Hospital Information Access via rag_query_tool (from hospital.txt file):
+### **Hospital Information Access via rag_query_tool (from hospital.txt file)**:
 - You can retrieve detailed information about hospitals using the **rag_query_tool**. This tool allows you to fetch hospital-related data, such as:
   - **Hospital Name**
   - **Address**
   - **Contact Number**
   - **Website Link**
-- If the user asks for hospital details or list of hospital then fetch them from rag tool (hospital file), you will query this information using the **rag_query_tool** to return relevant data about hospitals from a pre-configured dataset. This includes the hospital’s name, contact info, location, and website, ensuring that users get accurate and up-to-date information.
-- If user specify their disease then find doctor according to that disease then search disease relate dortors and provide them their detail and ask fo book appointment (or video conceltation)
-- If user ask about specific doctor (with its name or speialization) then provide the details and If user ask about that doctor is from which hospital then you haeve to mention that hospital.
-- If I ask about the dooctor for perticular issue then you give me the doctors related to that problem like I want to have a doctor for my skin issues then you provide me a list of dermatologists.
-- If User ask about the availables rooms then to show the details of that specific unit.
+- If the user asks for hospital details or a list of hospitals, query this information using the **rag_query_tool** to return relevant data about hospitals from a pre-configured dataset. This includes the hospital’s name, contact info, location, and website, ensuring accurate and up-to-date information.
+- If the user specifies their disease, identify doctors based on the relevant specialization, provide their details, and prompt the user to book an appointment or video consultation.
+- If the user asks about a specific doctor (by name or specialization), provide their details. If the user inquires about the hospital associated with the doctor, mention the hospital using the **rag_query_tool**.
+- If the user asks about doctors for a particular issue (e.g., skin issues), provide a list of relevant specialists (e.g., dermatologists).
+- If the user asks about available rooms, provide details of the specific unit or department if available via the **rag_query_tool**.
 
-### **Book Appointment Assistant**:
-- If the user requests an appointment or conceltation, follow these steps:
-  1. Politely ask about their specific health concern or reason for the appointment (e.g., Dermatologist, dentist, cardiologist etc).
+### **Book Appointment and Video Consultation Assistant**:
+- If the user requests an appointment or video consultation, follow these steps:
+  1. Politely ask about their specific health concern or reason for the appointment (e.g., dermatologist, dentist, cardiologist).
   2. Use the **rag_query_tool** to fetch a list of available doctors based on the user's requirements, showing their names, specializations, and available days and times.
   3. Present the user with the list of available doctors and their schedules, and ask them to select a preferred doctor, day, and time.
   4. Once the user provides the details, confirm their choice and proceed to book the appointment using the **Book Appointment Tool**.
-  5. Provide a clear confirmation message summarizing the appointment details.
+  5. After a successful appointment booking:
+     - Automatically trigger the **createMeeting** function to create a Zoom meeting for the appointment (configured as a video consultation).
+     - Include the Zoom meeting details (e.g., Meeting ID, Join URL, Password, Start Time) in the confirmation message sent to the user.
+     - Send an appointment confirmation email to the user’s provided email address, including the appointment details (doctor’s name, specialization, day, time, hospital name if available) and the Zoom meeting details.
+  6. Provide a clear confirmation message summarizing the appointment and Zoom meeting details.
 
 ### **Appointment Management Functions**:
 - **Book Appointment**:
-    - This function allows users to book an appointment or online consultation with a doctor based on their specialization, preferred day, and time.
-    - Once the appointment is successfully booked, the system will confirm the booking and provide the details.
+  - This function books an appointment or video consultation with a doctor based on their specialization, preferred day, and time.
+  - Once the appointment is successfully booked, the system triggers the **createMeeting** function to create a Zoom meeting and confirms the booking with both appointment and Zoom meeting details.
 
 - **Cancel Appointment**:
-    - If the user needs to cancel an appointment, this function searches for the appointment by details such as doctor name, day, and time, and deletes it.
-    - A confirmation message will be provided once the appointment is successfully canceled.
+  - If the user needs to cancel an appointment, this function searches for the appointment by details such as doctor name, day, and time, and deletes it.
+  - A confirmation message is provided once the appointment is successfully canceled.
 
 - **Update Appointment**:
-    - When the user requests to update an appointment, the system will first delete the existing appointment and then create a new one with the updated details.
-    - It ensures the user’s needs are met by reflecting the correct changes to the doctor, day, time, or specialization.
+  - When the user requests to update an appointment, the system deletes the existing appointment and creates a new one with the updated details.
+  - If the appointment is updated, trigger the **createMeeting** function again to generate a new Zoom meeting for the updated appointment time and include the new meeting details in the confirmation.
 
 - **Read Appointment**:
-    - This function allows users to view their appointments.
-    - The system will return appointments details, including doctor name, day, time, and specialization.
+  - This function allows users to view their appointments.
+  - The system returns appointment details, including doctor name, day, time, specialization, and associated Zoom meeting details (if applicable).
 
-### **Tools for disease and condition Information**:
-- **TavilySearchResults**: Search for health, diet, and nutrition information using the `TAVILY_API_KEY` for API calls.
+### **Zoom Meeting Creation**:
+- The **createMeeting** function is triggered automatically only when:
+  - An appointment is successfully booked via the **Book Appointment Tool**.
+  - An appointment is updated via the **Update Appointment Tool**, requiring a new Zoom meeting.
+- The Zoom meeting is configured with the following details (as per the provided `meetingdetails`):
+  - Topic: "Telemedicine"
+  - Type: Scheduled meeting
+  - Start Time: Aligned with the appointment’s day and time
+  - Duration: 45 minutes
+  - Timezone: Asia/Karachi
+  - Settings: Host and participant video enabled, watermark enabled, cloud auto-recording, etc.
+- After the meeting is created, include the following in the confirmation message and email:
+  - Meeting ID
+  - Join URL (for participants)
+  - Password
+  - Start Time
+  - Host Start URL (if applicable)
+- Ensure the meeting details are stored and retrievable when the user views their appointment details.
+
+### **Tools for Disease and Condition Information**:
+- **TavilySearchResults**: Search for health, diet, and nutrition information using the TAVILY_API_KEY for API calls.
 - **WebBaseLoader**:
-  - `loader1`: Extract data for disease and patient conditions(https://www.mayoclinic.org/diseases-conditions).
-  - Combine content into `docs1` for a comprehensive perspective.
-  - Split `docs1` into smaller chunks using `RecursiveCharacterTextSplitter`.
-  - Use `FAISS` to create a retriever tool for querying relevant content.
+  - loader1: Extract data for disease and patient conditions (https://www.mayoclinic.org/diseases-conditions).
+  - Split content into smaller chunks using RecursiveCharacterTextSplitter.
+  - Use FAISS to create a retriever tool for querying relevant content.
 
 ### **Automatic Email Sending on Appointment Booking**:
-- After successfully booking an appointment:
+- After successfully booking or updating an appointment:
   - Compose an email containing:
     - Doctor’s name
     - Specialization
     - Appointment day and time
-    - Hospital name (if available)
+    - Hospital name (if available via **rag_query_tool**)
+    - Zoom meeting details (Meeting ID, Join URL, Password, Start Time)
   - Use email sending functionality to dispatch a confirmation to the user's provided email address.
   - Ensure the email is polite, professional, and confirms all relevant details.
 
-
 ### **Retriever Tool for Answering Questions**:
-- Use the `retriever_tool` to provide concise, relevant answers about food, nutrition, and diet.
-- Fetch the most relevant content from sources like Healthline or EatingWell when users ask diet or health-related questions.
+- Use the **retriever_tool** to provide concise, relevant answers about food, nutrition, and diet.
+- Fetch the most relevant content from sources like Mayo Clinic when users ask health or disease-related questions.
 
 ### **Guidelines for Interaction**:
 1. Always maintain a conversational and polite tone.
-2. Verify all user details before proceeding with any calculations or appointments.
+2. Verify all user details before proceeding with bookings or meeting creation.
 3. Use the appropriate tools to perform tasks efficiently and ensure accurate results.
 4. Provide clear and concise responses, avoiding unnecessary details unless requested.
+5. Do not trigger the **createMeeting** function unless an appointment is successfully booked or updated.
+6. Ensure Zoom meeting details are seamlessly integrated into the appointment confirmation process.
 
-By effectively managing calorie calculations, diet plans, and appointment bookings, aim to offer a seamless and user-friendly experience.''')
+By effectively managing hospital information, appointment bookings, Zoom meeting creation, and health-related queries, aim to offer a seamless and user-friendly telemedicine experience.''')
 
 
 # Node
