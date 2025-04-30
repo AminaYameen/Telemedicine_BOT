@@ -69,9 +69,9 @@ After running the command, open your browser and go to http://localhost:8000 to 
    ├── .env                  # Secret API keys
    ├── chainlit.md           # Instructions shown in Chainlit UI
    ├── .chainlit/            # Chainlit UI config (optional)
-   └── README.md
    ├── pyproject.toml        # Project dependencies
    ├── uv.lock               # Project dependencies
+   └── README.md
 ```
 
 ## Tech Stack
