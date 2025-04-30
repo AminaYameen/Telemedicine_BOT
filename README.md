@@ -20,11 +20,15 @@ The Telemedicine_BOT Backend powers an AI-driven telemedicine chatbot designed t
 - LangGraph
 - Chainlit
 - FAISS (faiss-cpu)
-- Google Generative AI
-- Tavily API
+- langchain-google-genai
 - python-dotenv
 - pydantic
 - beautifulsoup4
+- bcrypt
+- langchain-community
+- langchain-core
+- sqlmodel
+- sqlalchemy
 
 ## Setup Instructions
 1. **Clone the Repository**
@@ -45,6 +49,7 @@ The Telemedicine_BOT Backend powers an AI-driven telemedicine chatbot designed t
    ```bash
    GOOGLE_API_KEY=your_google_api_key
    TAVILY_API_KEY=your_tavily_api_key
+   DB_URI=your_database_URI
 
 ## Running the Application
 1. **Start the FastAPI Backend**
