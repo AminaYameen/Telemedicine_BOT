@@ -45,3 +45,41 @@ The Telemedicine_BOT Backend powers an AI-driven telemedicine chatbot designed t
    ```bash
    GOOGLE_API_KEY=your_google_api_key
    TAVILY_API_KEY=your_tavily_api_key
+
+## Running the Application
+1. **Start the FastAPI Backend**
+   ```bash
+   uvicorn main:app --port 8001 --reload
+2. **Launch the Chainlit UI**
+   Chainlit provides a friendly web interface to interact with the AI assistant:
+   ```bash
+   uv run chainlit run main.py --port 8003
+After running the command, open your browser and go to http://localhost:8000 to chat with the bot.
+
+## Project Structure
+   ```text
+      Backend/
+   ├── main.py               # FastAPI + Chainlit logic
+   ├── hospitals.txt         # Hospital database (text-based)
+   ├── .env                  # Secret API keys
+   ├── requirements.txt      # Project dependencies
+   ├── chainlit.md           # Instructions shown in Chainlit UI
+   ├── .chainlit/            # Chainlit UI config (optional)
+   └── README.md
+```
+
+## Tech Stack
+- FastAPI: High-performance API framework
+- Uvicorn: Fast ASGI server
+- LangChain & LangGraph: AI orchestration and control flow
+- FAISS: Embedding-based memory for semantic search
+- Google Generative AI: LLM for answering user queries
+- Tavily API: Real-time web search API
+- Chainlit: UI for conversational AI applications
+- uv: Lightweight Python package/environment manager
+
+## Contributing
+Want to contribute? Feel free to fork the repo, suggest improvements, or open issues on the GitHub repository.
+
+## License
+This project is licensed under the MIT License.
