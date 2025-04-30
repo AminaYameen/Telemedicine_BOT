@@ -67,10 +67,11 @@ After running the command, open your browser and go to http://localhost:8000 to 
    ├── main.py               # FastAPI + Chainlit logic
    ├── hospitals.txt         # Hospital database (text-based)
    ├── .env                  # Secret API keys
-   ├── requirements.txt      # Project dependencies
    ├── chainlit.md           # Instructions shown in Chainlit UI
    ├── .chainlit/            # Chainlit UI config (optional)
    └── README.md
+   ├── pyproject.toml        # Project dependencies
+   ├── uv.lock               # Project dependencies
 ```
 
 ## Tech Stack
