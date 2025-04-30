@@ -31,3 +31,7 @@ The Telemedicine_BOT Backend powers an AI-driven telemedicine chatbot designed t
    ```bash
    git clone https://github.com/masfana016/Telemedicine_BOT.git
    cd Telemedicine_BOT/Backend
+
+1. **Install uv**
+   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+uv init
