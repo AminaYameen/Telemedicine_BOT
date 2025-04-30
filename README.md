@@ -36,7 +36,7 @@ The Telemedicine_BOT Backend powers an AI-driven telemedicine chatbot designed t
    git clone https://github.com/masfana016/Telemedicine_BOT.git
    cd Telemedicine_BOT/Backend
 
-1. **Install uv in powershell**
+1. **Install uv in powershell** https://docs.astral.sh/uv/getting-started/installation/
    ```bash
    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 2. **Run in Project terminal**
