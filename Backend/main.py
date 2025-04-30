@@ -275,7 +275,7 @@ def send_appointment_email(to_email: str, appointment_date: str, appointment_tim
 
 search = TavilySearchResults(tavily_api_key=os.getenv("TAVILY_API_KEY"))
 
-loader1 = WebBaseLoader("https://www.healthline.com/nutrition/1500-calorie-diet#foods-to-eat")
+loader1 = WebBaseLoader("https://www.mayoclinic.org/diseases-conditions")
 # loader2 = WebBaseLoader("https://www.msdmanuals.com/home")
 # loader3 = WebBaseLoader("https://www.eatingwell.com/category/4305/weight-loss-meal-plans/")
 docs1 = loader1.load()
@@ -290,8 +290,8 @@ vector = FAISS.from_documents(documents, GoogleGenerativeAIEmbeddings(model="mod
 retriever = vector.as_retriever()
 retriever_tool = create_retriever_tool(
     retriever,
-    "healthline_search",
-    "Search for information about healthline, food, diet and nutrition. For any questions about food and nutrition, healthy diet related and just answer the question, don't explain much, you must use this tool!",
+    "mayoclinic_search",
+    "Search for information about disease and patient condition. You must use this tool!",
 )
 
 
@@ -302,21 +302,23 @@ llm_with_tools = llm.bind_tools(tools)
 
 # System message
 sys_msg = SystemMessage(content='''You are a knowledgeable and supportive assistant specializing in hospital and healthcare services. 
-Your key responsibilities include providing information about hospitals, doctors, specializations, and assisting with appointment bookings for healthcare professionals.
+Your key responsibilities include providing information about hospitals, doctors, specializations, and assisting with appointment bookings (or video conceltation) for healthcare professionals.
 
-### **Hospital Information Access via rag_query_tool:
+### **Hospital Information Access via rag_query_tool (from hospital.txt file):
 - You can retrieve detailed information about hospitals using the **rag_query_tool**. This tool allows you to fetch hospital-related data, such as:
   - **Hospital Name**
   - **Address**
   - **Contact Number**
   - **Website Link**
 - If the user asks for hospital details or list of hospital then fetch them from rag tool (hospital file), you will query this information using the **rag_query_tool** to return relevant data about hospitals from a pre-configured dataset. This includes the hospital’s name, contact info, location, and website, ensuring that users get accurate and up-to-date information.
-- If user ask about specific doctor (with its name or speialization) the provide the details and If ask about that dontor is from which hospital then you haeve to mention that.
+- If user specify their disease then find doctor according to that disease then search disease relate dortors and provide them their detail and ask fo book appointment (or video conceltation)
+- If user ask about specific doctor (with its name or speialization) then provide the details and If user ask about that doctor is from which hospital then you haeve to mention that hospital.
 - If I ask about the dooctor for perticular issue then you give me the doctors related to that problem like I want to have a doctor for my skin issues then you provide me a list of dermatologists.
+- If User ask about the availables rooms then to show the details of that specific unit.
 
 ### **Book Appointment Assistant**:
-- If the user requests an appointment, follow these steps:
-  1. Politely ask about their specific health concern or reason for the appointment (e.g., Dermatologist, Nose specialist, cardiologist etc).
+- If the user requests an appointment or conceltation, follow these steps:
+  1. Politely ask about their specific health concern or reason for the appointment (e.g., Dermatologist, dentist, cardiologist etc).
   2. Use the **rag_query_tool** to fetch a list of available doctors based on the user's requirements, showing their names, specializations, and available days and times.
   3. Present the user with the list of available doctors and their schedules, and ask them to select a preferred doctor, day, and time.
   4. Once the user provides the details, confirm their choice and proceed to book the appointment using the **Book Appointment Tool**.
@@ -324,7 +326,7 @@ Your key responsibilities include providing information about hospitals, doctors
 
 ### **Appointment Management Functions**:
 - **Book Appointment**:
-    - This function allows users to book an appointment with a doctor based on their specialization, preferred day, and time.
+    - This function allows users to book an appointment or online consultation with a doctor based on their specialization, preferred day, and time.
     - Once the appointment is successfully booked, the system will confirm the booking and provide the details.
 
 - **Cancel Appointment**:
@@ -339,10 +341,10 @@ Your key responsibilities include providing information about hospitals, doctors
     - This function allows users to view their appointments.
     - The system will return appointments details, including doctor name, day, time, and specialization.
 
-### **Tools for Diet and Health Information**:
+### **Tools for disease and condition Information**:
 - **TavilySearchResults**: Search for health, diet, and nutrition information using the `TAVILY_API_KEY` for API calls.
 - **WebBaseLoader**:
-  - `loader1`: Extract data from [Healthline 1500 Calorie Diet](https://www.healthline.com/nutrition/1500-calorie-diet#foods-to-eat).
+  - `loader1`: Extract data for disease and patient conditions(https://www.mayoclinic.org/diseases-conditions).
   - Combine content into `docs1` for a comprehensive perspective.
   - Split `docs1` into smaller chunks using `RecursiveCharacterTextSplitter`.
   - Use `FAISS` to create a retriever tool for querying relevant content.
