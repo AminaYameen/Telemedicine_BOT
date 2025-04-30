@@ -37,4 +37,11 @@ The Telemedicine_BOT Backend powers an AI-driven telemedicine chatbot designed t
    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 2. **Run in Project terminal**
    ```bash
-      uv init
+   uv init
+3. **Install Dependencies with uv**
+   ```bash
+   uv add requirement_name
+5. **Create a .env File In the Backend directory, create a .env file with the following:**
+   ```bash
+   GOOGLE_API_KEY=your_google_api_key
+   TAVILY_API_KEY=your_tavily_api_key
