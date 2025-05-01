@@ -17,7 +17,8 @@ from langgraph.graph.state import CompiledStateGraph # type
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.messages import  HumanMessage, SystemMessage
 from dotenv import load_dotenv
-from pydantic import BaseModel
+from datetime import datetime
+import pytz
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -27,12 +28,16 @@ from typing import Optional
 import requests
 import json
 import os
-from fastapi import FastAPI, HTTPException
-import uvicorn
+from fastapi import FastAPI
+from datetime import datetime
 
 load_dotenv()
 
 app = FastAPI()
+
+
+# Define timezone for Pakistan
+PKT = pytz.timezone('Asia/Karachi')
 
 app.add_middleware(
     CORSMiddleware,
@@ -51,6 +56,38 @@ llm = ChatGoogleGenerativeAI(
 CLIENT_ID = os.getenv("ZOOM_CLIENT_ID")
 CLIENT_SECRET = os.getenv("ZOOM_CLIENT_SECRET")
 ACCOUNT_ID = os.getenv("ZOOM_ACCOUNT_ID")
+
+# # Function to send email
+def send_email(to_email: str, subject: str, body: str):
+    """
+    Sends an email using Gmail's SMTP server.
+
+    Parameters:
+    to_email (str): Recipient email address.
+    subject (str): Subject of the email.
+    body (str): Body content of the email.
+
+    Returns:
+    None
+    """
+    
+    email_address = os.getenv('email_addess')
+    APP_PASSWORD = os.getenv('GMAIL_APP_PASSWORD')
+    
+    try:
+        with smtplib.SMTP_SSL(host="smtp.gmail.com", port=465) as server:
+            server.login(email_address, APP_PASSWORD)
+            
+            msg = MIMEMultipart()
+            msg['From'] = email_address
+            msg['To'] = to_email
+            msg['Subject'] = subject
+            msg.attach(MIMEText(body, 'plain'))
+            
+            server.send_message(msg)
+        print("Email sent successfully!")
+    except Exception as e:
+        print(f"Error: {str(e)}")
 
 def get_access_token():
     url = "https://zoom.us/oauth/token"
@@ -102,10 +139,21 @@ def getMeetingParticipants(meeting_id):
     )
     return response.json()
 
+def convert_appointment_time_to_zoom_format(appointment_time):
+    """Convert the appointment time from 'DD-MM-YYYY HH:MM:SS' to 'YYYY-MM-DDTHH:MM:SS' format"""
+    # Parse the appointment time string to a datetime object
+    appointment_dt = datetime.strptime(appointment_time, "%d-%m-%Y %H:%M:%S")
+    
+    # Convert it to Pakistan's timezone
+    appointment_dt = PKT.localize(appointment_dt)
+    
+    # Convert the datetime object to the desired string format
+    return appointment_dt.strftime("%Y-%m-%dT%H:%M:%S")
+
 meetingdetails = {
     "topic": "Telemedicine",
     "type": 2,
-    "start_time": "2025-05-14T10:21:57",
+    "start_time": "14-05-2025 10:21:57",
     "duration": "45",
     "timezone": "Asia/Karachi",
     "agenda": "test",
@@ -123,6 +171,7 @@ meetingdetails = {
         "auto_recording": "cloud"
     }
 }
+
 
 def createMeeting():
     """Create a new Zoom meeting and return details"""
@@ -206,7 +255,7 @@ SQLModel.metadata.create_all(engine)
 
 # The book_appointment function
 def book_appointment(doctor: str, day: str, time: str, specialization: str) -> str:
-    """Books an appointment and saves it in the database.
+    """Books an appointment or video consultation and saves it in the database.
     
     Args:
         doctor: The name of the doctor with whom the appointment is booked.
@@ -335,57 +384,54 @@ def update_appointment(doctor: str, day: str, time: str,
         return f"Failed to update appointment: {str(e)}"
 
 
-def send_appointment_email(to_email: str, appointment_date: str, appointment_time: str) -> None:
-    """
-    Sends an appointment confirmation email to the user.
+# def send_appointment_email(to_email: str, appointment_date: str, appointment_time: str) -> None:
+#     """
+#     Sends an appointment confirmation email to the user.
 
-    Args:
-        to_email (str): Recipient's email address.
-        appointment_date (str): Date of the appointment.
-        appointment_time (str): Time of the appointment.
-    """
-    # Email account credentials
-    sender_email = "masfanasrullahansari123@gmail.com"
-    sender_password = "wwrv dyjw xrca qlwh"
+#     Args:
+#         to_email (str): Recipient's email address.
+#         appointment_date (str): Date of the appointment.
+#         appointment_time (str): Time of the appointment.
+#     """
+#     # Email account credentials
+#     # sender_email = "masfanasrullahansari123@gmail.com"
+#     # sender_password = "wwrv dyjw xrca qlwh"
+#     sender_email= os.getenv('GMAIL_ADDRESS')
+#     sender_password = os.getenv('GMAIL_APP_PASSWORD')
 
-    # Email content
-    subject = "Appointment Confirmation"
-    body = (
-        f"Dear User,\n\n"
-        f"Your appointment has been successfully booked for {appointment_date} at {appointment_time}.\n\n"
-        f"Thank you!"
-    )
+#     # Email content
+#     subject = "Appointment Confirmation"
+#     body = (
+#         f"Dear User,\n\n"
+#         f"Your appointment has been successfully booked for {appointment_date} at {appointment_time}.\n\n"
+#         f"Thank you!"
+#     )
 
-    # Create the email
-    message = MIMEMultipart()
-    message['From'] = sender_email
-    message['To'] = to_email
-    message['Subject'] = subject
+#     # Create the email
+#     message = MIMEMultipart()
+#     message['From'] = sender_email
+#     message['To'] = to_email
+#     message['Subject'] = subject
 
-    # Attach the email body
-    message.attach(MIMEText(body, 'plain'))
+#     # Attach the email body
+#     message.attach(MIMEText(body, 'plain'))
 
-    try:
-        # Connect to the SMTP server
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()  # Secure the connection
-        server.login(sender_email, sender_password)
-        server.send_message(message)
-        print(f"Appointment confirmation email sent to {to_email}.")
-    except Exception as e:
-        print(f"Failed to send email. Error: {e}")
-    finally:
-        server.quit()
+#     try:
+#         # Connect to the SMTP server
+#         server = smtplib.SMTP('smtp.gmail.com', 587)
+#         server.starttls()  # Secure the connection
+#         server.login(sender_email, sender_password)
+#         server.send_message(message)
+#         print(f"Appointment confirmation email sent to {to_email}.")
+#     except Exception as e:
+#         print(f"Failed to send email. Error: {e}")
+#     finally:
+#         server.quit()
 
 search = TavilySearchResults(tavily_api_key=os.getenv("TAVILY_API_KEY"))
 
 loader1 = WebBaseLoader("https://www.mayoclinic.org/diseases-conditions")
-# loader2 = WebBaseLoader("https://www.msdmanuals.com/home")
-# loader3 = WebBaseLoader("https://www.eatingwell.com/category/4305/weight-loss-meal-plans/")
 docs1 = loader1.load()
-# docs2 = loader2.load()
-# docs3 = loader3.load()
-# combined_docs = docs1 + docs2 + docs3
 documents = RecursiveCharacterTextSplitter(
     chunk_size=1000, chunk_overlap=200
 ).split_documents(docs1)
@@ -399,7 +445,7 @@ retriever_tool = create_retriever_tool(
 )
 
 
-tools = [search, retriever_tool, book_appointment, update_appointment, cancel_appointment, read_all_appointments, rag_query_tool, createMeeting]
+tools = [search, retriever_tool, book_appointment, update_appointment, cancel_appointment, read_all_appointments, rag_query_tool, createMeeting, send_email]
 
 
 llm_with_tools = llm.bind_tools(tools)
@@ -407,31 +453,52 @@ llm_with_tools = llm.bind_tools(tools)
 # System message
 sys_msg = SystemMessage(content='''You are a knowledgeable and supportive assistant specializing in hospital and healthcare services. Your key responsibilities include providing information about hospitals, doctors, specializations, assisting with appointment bookings, and facilitating video consultations via Zoom meetings when an appointment is booked.
 
-### **Hospital Information Access via rag_query_tool (from hospital.txt file)**:
+1- ### **Hospitals and Doctors Information Access via rag_query_tool (from hospital.txt file)**:
 - You can retrieve detailed information about hospitals using the **rag_query_tool**. This tool allows you to fetch hospital-related data, such as:
   - **Hospital Name**
   - **Address**
   - **Contact Number**
   - **Website Link**
-- If the user asks for hospital details or a list of hospitals, query this information using the **rag_query_tool** to return relevant data about hospitals from a pre-configured dataset. This includes the hospital’s name, contact info, location, and website, ensuring accurate and up-to-date information.
+- If the user asks for hospital details or a list of hospitals, query this information using the **rag_query_tool** to return relevant data about hospitals from a pre-configured dataset. This includes the hospital's name, contact info, location, and website, ensuring accurate and up-to-date information.
 - If the user specifies their disease, identify doctors based on the relevant specialization, provide their details, and prompt the user to book an appointment or video consultation.
-- If the user asks about a specific doctor (by name or specialization), provide their details. If the user inquires about the hospital associated with the doctor, mention the hospital using the **rag_query_tool**.
+- If the user asks about a specific doctor through its disease or specialization (find doctor through patient disease), provide their details of 
+    - *Doctor Name*
+    - *Specialty*
+    - *Qualifications*
+    - *Fee (Consultation)*
+    - *Available Timings*
+    - *Online Consultation*
+  from RAG fuction. If the user inquires about the hospital associated with the doctor, then mention the hospital name using the **rag_query_tool**.
 - If the user asks about doctors for a particular issue (e.g., skin issues), provide a list of relevant specialists (e.g., dermatologists).
 - If the user asks about available rooms, provide details of the specific unit or department if available via the **rag_query_tool**.
 
-### **Book Appointment and Video Consultation Assistant**:
+2- ### **Book Appointment and Video Consultation Assistant**:
 - If the user requests an appointment or video consultation, follow these steps:
   1. Politely ask about their specific health concern or reason for the appointment (e.g., dermatologist, dentist, cardiologist).
   2. Use the **rag_query_tool** to fetch a list of available doctors based on the user's requirements, showing their names, specializations, and available days and times.
   3. Present the user with the list of available doctors and their schedules, and ask them to select a preferred doctor, day, and time.
-  4. Once the user provides the details, confirm their choice and proceed to book the appointment using the **Book Appointment Tool**.
+  4. Once the user provides the details, confirm their choice and proceed to book the appointment or Video Consultation using the **Book Appointment Tool**.
   5. After a successful appointment booking:
-     - Automatically trigger the **createMeeting** function to create a Zoom meeting for the appointment (configured as a video consultation).
-     - Include the Zoom meeting details (e.g., Meeting ID, Join URL, Password, Start Time) in the confirmation message sent to the user.
-     - Send an appointment confirmation email to the user’s provided email address, including the appointment details (doctor’s name, specialization, day, time, hospital name if available) and the Zoom meeting details.
+     - Automatically trigger the **createMeeting** function to create a Zoom meeting for the consultation (configured as a video consultation).
+     - Include the Zoom meeting details (e.g., Meeting ID, Join URL, Password, Start Time (which user select for appointment or consultation)) in the confirmation message sent to the user.
+     - First ask for user's email address and send an appointment confirmation email to the user's provided email address, including the appointment details (doctor's name, specialization, day, time, hospital name if available) and the Zoom meeting details.
   6. Provide a clear confirmation message summarizing the appointment and Zoom meeting details.
+  7. stricktly follow the steps to contact with a doctor of any field.
 
-### **Appointment Management Functions**:
+3- ### **Sending Emails automatically after book appointment of video consultation**:
+   - After successfully booking or updating an appointment, generate well-structured and contextually relevant email bodies based on booking appointment.
+     - Compose an email containing:
+        - Doctor's name
+        - Specialization
+        - Appointment day and time
+        - Hospital name (if available via **rag_query_tool**)
+        - Zoom meeting details (Meeting ID, Join URL, Password, Start Time (which user select for appointment or consultation))
+   - Send emails using Gmail's SMTP server, utilizing the provided recipient email address, subject, and body content.
+   - If replying to an email, ensure the recipient's email address is correctly identified from the previously read emails.
+   - Support attaching files to outgoing emails if requested by the user.
+   - Ensure the email is polite, professional, and confirms all relevant details.
+   
+4- ### **Appointment Management Functions**:
 - **Book Appointment**:
   - This function books an appointment or video consultation with a doctor based on their specialization, preferred day, and time.
   - Once the appointment is successfully booked, the system triggers the **createMeeting** function to create a Zoom meeting and confirms the booking with both appointment and Zoom meeting details.
@@ -448,14 +515,14 @@ sys_msg = SystemMessage(content='''You are a knowledgeable and supportive assist
   - This function allows users to view their appointments.
   - The system returns appointment details, including doctor name, day, time, specialization, and associated Zoom meeting details (if applicable).
 
-### **Zoom Meeting Creation**:
+5- ### **Zoom Meeting Creation**:
 - The **createMeeting** function is triggered automatically only when:
   - An appointment is successfully booked via the **Book Appointment Tool**.
   - An appointment is updated via the **Update Appointment Tool**, requiring a new Zoom meeting.
 - The Zoom meeting is configured with the following details (as per the provided `meetingdetails`):
   - Topic: "Telemedicine"
   - Type: Scheduled meeting
-  - Start Time: Aligned with the appointment’s day and time
+  - Start Time: Aligned with the appointment's day and time
   - Duration: 45 minutes
   - Timezone: Asia/Karachi
   - Settings: Host and participant video enabled, watermark enabled, cloud auto-recording, etc.
@@ -467,25 +534,14 @@ sys_msg = SystemMessage(content='''You are a knowledgeable and supportive assist
   - Host Start URL (if applicable)
 - Ensure the meeting details are stored and retrievable when the user views their appointment details.
 
-### **Tools for Disease and Condition Information**:
+6- ### **Tools for Disease and Condition Information**:
 - **TavilySearchResults**: Search for health, diet, and nutrition information using the TAVILY_API_KEY for API calls.
 - **WebBaseLoader**:
   - loader1: Extract data for disease and patient conditions (https://www.mayoclinic.org/diseases-conditions).
   - Split content into smaller chunks using RecursiveCharacterTextSplitter.
   - Use FAISS to create a retriever tool for querying relevant content.
 
-### **Automatic Email Sending on Appointment Booking**:
-- After successfully booking or updating an appointment:
-  - Compose an email containing:
-    - Doctor’s name
-    - Specialization
-    - Appointment day and time
-    - Hospital name (if available via **rag_query_tool**)
-    - Zoom meeting details (Meeting ID, Join URL, Password, Start Time)
-  - Use email sending functionality to dispatch a confirmation to the user's provided email address.
-  - Ensure the email is polite, professional, and confirms all relevant details.
-
-### **Retriever Tool for Answering Questions**:
+7- ### **Retriever Tool for Answering Questions**:
 - Use the **retriever_tool** to provide concise, relevant answers about food, nutrition, and diet.
 - Fetch the most relevant content from sources like Mayo Clinic when users ask health or disease-related questions.
 
@@ -522,43 +578,6 @@ builder.add_conditional_edges(
 builder.add_edge("tools", "assistant")
 memory: MemorySaver = MemorySaver()
 react_graph_memory: CompiledStateGraph = builder.compile(checkpointer=memory)
-
-# class UserInput(BaseModel):
-#     input_text: str 
-
-# # API endpoint
-# @app.post("/generateanswer")
-# async def generate_answer(user_input: UserInput):
-#     try:
-#         messages = [HumanMessage(content=user_input.input_text)]
-#         response = react_graph_memory.invoke({"messages": messages}, config={"configurable": {"thread_id": "1"}})
-
-#         # Extract the response from the graph output
-#         if response and "messages" in response:
-#             # Extract the last message (assistant's response)
-#             assistant_response = response["messages"][-1].content
-#             return {"response": assistant_response}
-#         else:
-#             return {"response": "No response generated."}
-
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-
-# # Run the application
-# if __name__ == "__main__":
-#     uvicorn.run("main:app", host="127.0.0.1", port=8001, reload=True)
-
-
-
-# # Specify a thread
-# config1 = {"configurable": {"thread_id": "1"}}
-
-
-# messages = [HumanMessage(content="How much would I save by switching to solar panels if my monthly electricity cost is $200?")]
-# messages = react_graph_memory.invoke({"messages": messages}, config1)
-# for m in messages['messages']:
-#     m.pretty_print()
-
 
 # Chainlit event handlers
 @cl.on_chat_start

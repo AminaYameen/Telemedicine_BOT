@@ -42,28 +42,32 @@ DHQ Hospital Doctors:
         Fri	09:00 AM to 01:00 PM, 05:30 PM to 08:00 PM
         Sat	09:00 AM to 01:00 PM, 05:30 PM to 08:00 PM
     Online Consultation: Not specified
-
 2. Dr. Saira lona
     Specialty: Dentist
     Qualifications: MDS
     Experience: 6 years
     Consultation Fee: 500
     Available Timings: 
-        Monday 07:30 PM - 09:30 PM
-        Tuesday 07:30 PM - 09:30 PM
-        Wednesday 07:30 PM - 09:30 PM
-        Thursday 07:30 PM - 09:30 PM
-        Saturday 07:30 PM - 09:30 PM
-        Sunday 07:30 PM - 09:30 PM
+        Monday 07:30 PM to 09:30 PM
+        Tuesday 07:30 PM to 09:30 PM
+        Wednesday 07:30 PM to 09:30 PM
+        Thursday 07:30 PM to 09:30 PM
+        Saturday 07:30 PM to 09:30 PM
+        Sunday 07:30 PM to 09:30 PM
     Online Consultation: yes
-
 3. Dr. Khizar Abbas Sindhu
-   - Specialty: Orthopedic Surgeon
+   - Specialty: orthopedists (Orthopedic Surgeon)
    - Qualifications: MBBS, FCPS
    - Experience: 6 years
    - Consultation Fee: Rs. 1000
-   - Timings: Mon 05:00 PM - 09:00 PM, Tue–Sat: 12:00 AM - 11:00 PM
-
+   - Timings:
+        Monday 05:30 PM to 09:30 PM
+        Tuesday 12:00 PM to 06:00 PM
+        Wednesday 12:00 PM to 06:00 PM
+        Thursday 12:00 PM to 06:00 PM
+        Friday 03:00 PM to 06:00 PM
+        Saturday 12:00 PM to 06:00 PM
+    - Online Consultation: yes
 4. Dr. Sajid Mahmood Randhawa
    - Specialty: pediatrician
    - Qualifications: MBBS, DCH
@@ -78,7 +82,6 @@ DHQ Hospital Doctors:
         Saturday 11:00 AM to 05:00 PM
         Sunday 11:00 AM to 05:00 PM
    - Online Consultation: Yes
-
 5. Dr. Ahmad Warraich
    - Specialty: Psychiatrist
    - Qualifications: BS (Psychopathology), MS/MPhil (Clinical Psychology), Diploma in Child Psychology (Harvard University)
@@ -91,14 +94,29 @@ DHQ Hospital Doctors:
         Thursday 12:00 AM to 11:00 PM
         Friday 12:00 AM to 11:00 PM
         Saturday 12:00 AM to 11:00 PM
-5. Dr. Hooriya Nauman Sheikh
-    Specialty: General Practitioner
+6. Dr. Hooriya Nauman Sheikh
+    Specialty: General Practitioner (Dengue disease)
     Qualifications: MBBS, Family Medicine Certification, Certificate in Hypertension Management, Certificate in Functional Gastrointestinal Disorders, COVID Health Trainer
     Experience: 2 years
-    Consultation Fee: PKR 350
+    Fee (Consultation): PKR 350
     Available Timings: Available from August 24
     Online Consultation: Yes
     online availability: 2pm to 4pm (Monday to saturday)
+7. Dr. Ateeq-ur-Rehman Mughal 
+    - Specialty: Cardiologist
+    - Qualifications: MBBS, (Consultant Cardiologist) is the Head of department.
+    - Experience: 20 years
+    - Consultation Fees: PKR 1000
+    - Timings: 
+        Monday 11:00 AM to 05:00 PM
+        Tuesday 11:00 AM to 05:00 PM
+        Wednesday 11:00 AM to 05:00 PM
+        Thursday 11:00 AM to 05:00 PM
+        Friday 11:00 AM to 05:00 PM
+        Saturday 11:00 AM to 05:00 PM
+        Sunday 11:00 AM to 05:00 PM
+    - Online Consultation: Yes
+    - online availability: 2pm to 4pm (Monday to saturday)
 
 Allied Hospital Faisalabad
 --------------------------
@@ -111,39 +129,67 @@ Founded: 1978
 Beds: 1,450
 Type: Teaching, General, Public Hospital
 
+Allied Hospital Room and Bed Availability by Department
+1. Pediatrics Unit
+    Total Beds: 80
+    Neonatal ICU: 20 beds
+    General Pediatric Ward: 40 beds
+    Emergency Pediatric Care: 20 beds
+    Note: Offers 24/7 emergency and intensive pediatric services.
+2. Dermatology Unit
+    Beds: 25
+    Purpose: Inpatient and outpatient services for skin-related diseases.
+3. Cardiology Unit
+    Total Beds: 60
+    ICU/CCU Beds: 10
+    General Cardiac Beds: 50
+    Note: Equipped with ECG, Echo, and Angiography services.
+4. General Surgery Unit
+    Beds: 100
+    Pre-Operative: 30
+    Post-Operative: 40
+    Recovery Ward: 30
+    Note: Handles both minor and major surgical cases including trauma.
+
+Allied Hospital Doctors
 1. Dr. M. Faheem Yousaf
-Specialty: Medical Superintendent
-Experience: Not specified
-Consultation Fee: Not specified
-Available Timings:
-Mon - Fri: 09:00 AM to 05:00 PM
-Online Consultation: Not specified
-
+    Specialty: Medical Superintendent
+    Experience: Not specified
+    Consultation Fee: Not specified
+    Timings: Mon – Fri: 09:00 AM to 05:00 PM
+    Online Consultation: Not specified
 2. Prof. Dr. Hina Ayesha
-Specialty: Pediatrics
-Experience: Not specified
-Consultation Fee: Not specified
-Available Timings:
-Mon - Fri: 09:00 AM to 05:00 PM
-Online Consultation: Not specified
-
+    Specialty: Pediatrics
+    Experience: 15 years
+    Consultation Fee: PKR 900
+    Available Timings:
+        Mon – Fri: 09:00 AM to 05:00 PM 
+    Online Consultation: Yes
 3. Dr. Jaffar Hassan Mubarak
-Specialty: Not specified
-Experience: Not specified
-Consultation Fee: Not specified
-Available Timings: Not specified
-Online Consultation: No specified
-
+    Specialty: General Physician
+    Experience: 10 years
+    Consultation Fee: PKR 700
+    Available Timings:
+        Mon – Sat: 10:00 AM to 02:00 PM
+    Online Consultation: Yes
 4. Dr. Muhammad Afzaal Cheema
-Specialty: Not specified
-Experience: Not specified
-Consultation Fee: Not specified
-Available Timings: Not specified
-Online Consultation: Not specified
-
+    Specialty: Orthopedic Surgeon
+    Experience: 12 years
+    Consultation Fee: PKR 1000
+    Available Timings:
+        Mon – Sat: 11:00 AM to 04:00 PM
+    Online Consultation: Yes
 5. Dr. Ammad Ayub Shah
-Specialty: Not specified
-Experience: Not specified
-Consultation Fee: Not specified
-Available Timings: Not specified
-Online Consultation: Not specified
+    Specialty: ENT Specialist
+    Experience: 8 years
+    Consultation Fee: PKR 800
+    Available Timings:
+        Mon – Fri: 10:00 AM to 03:00 PM
+    Online Consultation: Yes
+6. Dr. Sadaf Khalid
+   - Specialty: Dermatologist
+   - Qualifications: MBBS
+   - Experience: 6 years
+   - Consultation Fee: Rs. 1000
+   - Timings: Mon 05:00 PM - 09:00 PM, Tue–Sat: 12:00 AM - 11:00 PM
+   - Online Consultation: Yes
