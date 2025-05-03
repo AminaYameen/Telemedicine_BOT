@@ -38,13 +38,13 @@ The Telemedicine_BOT Backend powers an AI-driven telemedicine chatbot designed t
 
 1. **Install uv in powershell** https://docs.astral.sh/uv/getting-started/installation/
    ```bash
-   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+   powershell -ExecutionPolicy Bypass -c "irm https://astral.sh/uv/install.ps1 | iex"
 2. **Run in Project terminal**
    ```bash
    uv init
 3. **Install Dependencies with uv**
    ```bash
-   uv add requirement_name
+   UV add requirement_name
 5. **Create a .env File In the Backend directory, create a .env file with the following:**
    ```bash
    GOOGLE_API_KEY=your_google_api_key
@@ -58,7 +58,7 @@ The Telemedicine_BOT Backend powers an AI-driven telemedicine chatbot designed t
 2. **Launch the Chainlit UI**
    Chainlit provides a friendly web interface to interact with the AI assistant:
    ```bash
-   uv run chainlit run main.py --port 8003
+   uv run chainlit run main.py-- port 8003
 After running the command, open your browser and go to http://localhost:8000 to chat with the bot.
 
 ## Project Structure
@@ -85,7 +85,7 @@ After running the command, open your browser and go to http://localhost:8000 to 
 - uv: Lightweight Python package/environment manager
 
 ## Contributing
-Want to contribute? Feel free to fork the repo, suggest improvements, or open issues on the GitHub repository.
+if anyone Want to contribute? Feel free to fork the repo, suggest improvements, or open issues on the GitHub repository.
 
 ## License
 This project is licensed under the MIT License.
